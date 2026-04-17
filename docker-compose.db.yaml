@@ -1,0 +1,23 @@
+services:
+  task-manager-database:
+    image: postgres:17
+    container_name: task-manager-database
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DATABASE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - task-manager-db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - task-manager-network
+
+volumes:
+  task-manager-db:
+    driver: local
+    
+networks:
+  task-manager-network:
+    external: true

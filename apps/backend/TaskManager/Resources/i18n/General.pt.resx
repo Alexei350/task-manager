@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+        <xsd:element name="root" msdata:IsDataSet="true">
+            <xsd:complexType>
+                <xsd:choice maxOccurs="unbounded">
+                    <xsd:element name="metadata">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+                            </xsd:sequence>
+                            <xsd:attribute name="name" use="required" type="xsd:string" />
+                            <xsd:attribute name="type" type="xsd:string" />
+                            <xsd:attribute name="mimetype" type="xsd:string" />
+                            <xsd:attribute ref="xml:space" />
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="assembly">
+                        <xsd:complexType>
+                            <xsd:attribute name="alias" type="xsd:string" />
+                            <xsd:attribute name="name" type="xsd:string" />
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="data">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+                            </xsd:sequence>
+                            <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+                            <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+                            <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+                            <xsd:attribute ref="xml:space" />
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="resheader">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                            </xsd:sequence>
+                            <xsd:attribute name="name" type="xsd:string" use="required" />
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:choice>
+            </xsd:complexType>
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>2.0</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="duplicated_user_email" xml:space="preserve">
+    <value>Já existe um cadastro com este email</value>
+  </data>
+    <data name="incomplete_data" xml:space="preserve">
+    <value>Dados incompletos</value>
+  </data>
+    <data name="incorrect_password" xml:space="preserve">
+    <value>Usuário ou senha incorretos</value>
+  </data>
+    <data name="invalid_email" xml:space="preserve">
+    <value>Email inválido</value>
+  </data>
+    <data name="invalid_refresh_token" xml:space="preserve">
+    <value>Refresh token inválido</value>
+  </data>
+    <data name="invalid_token" xml:space="preserve">
+    <value>Token inválido</value>
+  </data>
+    <data name="record_is_deleted" xml:space="preserve">
+    <value>Registro está deletado</value>
+  </data>
+    <data name="record_not_found" xml:space="preserve">
+    <value>Registro não encontrado</value>
+  </data>
+    <data name="token_validation_error" xml:space="preserve">
+    <value>Erro ao validar token</value>
+  </data>
+    <data name="unexpected_error" xml:space="preserve">
+    <value>Ocorreu um erro inesperado</value>
+  </data>
+    <data name="user_not_found" xml:space="preserve">
+    <value>Usuário não encontrado</value>
+  </data>
+    <data name="error_when_creating" xml:space="preserve">
+        <value>Erro ao cadastrar</value>
+    </data>
+    <data name="success_when_creating" xml:space="preserve">
+        <value>Cadastrado com sucesso</value>
+    </data>
+    <data name="error_when_deleting" xml:space="preserve">
+        <value>Erro ao deletar</value>
+    </data>
+    <data name="error_when_updating" xml:space="preserve">
+        <value>Erro ao atualizar</value>
+    </data>
+    <data name="success_when_deleting" xml:space="preserve">
+        <value>Deletado com sucesso</value>
+    </data>
+    <data name="success_when_updating" xml:space="preserve">
+        <value>Atualizado com sucesso</value>
+    </data>
+    <data name="authentication_error" xml:space="preserve">
+        <value>Erro de autenticação</value>
+    </data>
+    <data name="email_not_verified" xml:space="preserve">
+        <value>E-mail não verificado</value>
+    </data>
+    <data name="api_key_created" xml:space="preserve">
+        <value>Chave de API criada com sucesso</value>
+    </data>
+    <data name="api_key_revoked" xml:space="preserve">
+        <value>Chave de API revogada com sucesso</value>
+    </data>
+    <data name="api_key_list" xml:space="preserve">
+        <value>Chaves de API listadas com sucesso</value>
+    </data>
+    <data name="api_key_invalid" xml:space="preserve">
+        <value>Chave de API inválida</value>
+    </data>
+    <data name="api_key_expired" xml:space="preserve">
+        <value>Chave de API expirada</value>
+    </data>
+    <data name="api_key_valid" xml:space="preserve">
+        <value>Chave de API válida</value>
+    </data>
+</root>

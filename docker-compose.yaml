@@ -1,0 +1,65 @@
+services:
+  task-manager-api:
+    container_name: task-manager-api
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DB_HOST=${DB_HOST:-task-manager-database}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${POSTGRES_DATABASE}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASS=${POSTGRES_PASSWORD}
+      # JWT Configuration (REQUIRED - configure via .env)
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=admin
+      - Jwt__Audience=task-manager
+      # Google OAuth (REQUIRED - configure via .env)
+      - GoogleClientId=${VITE_GOOGLE_CLIENT_ID}
+    ports:
+      - "30000:8080"
+    depends_on:
+      - task-manager-database
+    networks:
+      - task-manager-network
+
+  task-manager-frontend:
+    container_name: task-manager-frontend
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:30000}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - task-manager-api
+    networks:
+      - task-manager-network
+
+  task-manager-database:
+    image: postgres:17
+    container_name: task-manager-database
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DATABASE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - task-manager-db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - task-manager-network
+
+networks:
+  task-manager-network:
+    driver: bridge
+
+volumes:
+  task-manager-db:
+    driver: local

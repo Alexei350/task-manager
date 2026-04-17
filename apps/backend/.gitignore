@@ -1,0 +1,14 @@
+# Arquivos de configuração com secrets
+appsettings.json
+appsettings.*.json
+Properties/launchSettings.json
+
+# Diretórios de build/compilação
+bin/
+obj/
+
+# IDE
+.vs/
+.vscode/
+*.sln.docstates
+*.user

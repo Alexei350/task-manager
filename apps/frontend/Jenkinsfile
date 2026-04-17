@@ -1,0 +1,138 @@
+pipeline {
+    agent { label 'docker-build-agent' }
+
+    options {
+        skipDefaultCheckout(true)
+    }
+
+    environment {
+        DOCKER_IMAGE = 'alexei350/task-manager-frontend'
+        TZ = 'America/Sao_Paulo'
+        NPM_CONFIG_CACHE = '/home/jenkins/.npm'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Init') {
+            steps {
+                script {
+                    def shortCommit = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+
+                    currentBuild.displayName = "#${BUILD_NUMBER} - ${BRANCH_NAME} - ${shortCommit}"
+                }
+            }
+        }
+
+        stage('Install & Test') {
+            when {
+                changeset "apps/frontend/**"
+            }
+            steps {
+                sh """
+                    cd apps/frontend
+                    npm ci --prefer-offline
+                    npm run lint
+                    npm run test:coverage -- --reporter=verbose
+                """
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'apps/frontend/coverage',
+                        reportFiles: 'index.html',
+                        reportName: 'Frontend Coverage'
+                    ])
+
+                    archiveArtifacts artifacts: 'apps/frontend/coverage/**/*', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            when {
+                changeset "apps/frontend/**"
+            }
+            steps {
+                withCredentials([
+                    string(credentialsId: 'google-client-id', variable: 'GOOGLE_CLIENT_ID'),
+                    string(credentialsId: 'frontend-api-url', variable: 'API_BASE_URL')
+                ]) {
+                    sh """
+                        cd apps/frontend
+                        docker pull ${DOCKER_IMAGE}:latest || true
+                        docker build \
+                            --cache-from ${DOCKER_IMAGE}:latest \
+                            --build-arg VITE_GOOGLE_CLIENT_ID=\$GOOGLE_CLIENT_ID \
+                            --build-arg VITE_API_BASE_URL=\$API_BASE_URL \
+                            -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
+                        docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Push Image') {
+            when {
+                changeset "apps/frontend/**"
+            }
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'docker-hub',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    sh """
+                        echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+                        docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                        docker push ${DOCKER_IMAGE}:latest
+                        docker logout
+                    """
+                }
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                changeset "apps/frontend/**"
+            }
+            steps {
+                sshagent(['server-ssh']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no alexei@alexei.dev.br '
+                            cd /home/alexei/docker/task-manager &&
+                            docker compose pull task-manager-frontend &&
+                            docker compose up -d --no-deps task-manager-frontend
+                        '
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh """
+                docker image rm ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest || true
+            """
+        }
+        success {
+            echo "✅ Frontend publicado com sucesso (${BUILD_NUMBER})"
+        }
+        failure {
+            echo "❌ Falha no pipeline do frontend"
+        }
+    }
+}

@@ -1,0 +1,170 @@
+pipeline {
+    agent { label 'docker-build-agent' }
+
+    environment {
+        DOCKER_IMAGE = 'alexei350/task-manager'
+        DOCKER_REGISTRY = 'docker.io'
+        NUGET_PACKAGES = '/home/jenkins/.nuget/packages'
+    }
+
+    options {
+        skipDefaultCheckout(true)
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Init') {
+            steps {
+                script {
+                    def shortCommit = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+
+                    currentBuild.displayName = "#${BUILD_NUMBER} - ${BRANCH_NAME} - ${shortCommit}"
+                }
+            }
+        }
+
+        stage('Restore') {
+            when {
+                changeset "apps/backend/**"
+            }
+            steps {
+                sh '''
+                    cd apps/backend
+                    dotnet restore TaskManager.sln \
+                        --packages "${NUGET_PACKAGES}"
+                '''
+            }
+        }
+
+        stage('Build') {
+            when {
+                changeset "apps/backend/**"
+            }
+            steps {
+                sh '''
+                    cd apps/backend
+                    dotnet build TaskManager.sln \
+                        -c Release \
+                        --no-restore
+                '''
+            }
+        }
+
+        stage('Unit Tests') {
+            when {
+                changeset "apps/backend/**"
+            }
+            steps {
+                sh '''
+                    cd apps/backend
+                    dotnet test TaskManager.UnitTests/TaskManager.UnitTests.csproj \
+                        -c Release \
+                        --no-build \
+                        --logger "trx;LogFileName=test-results.trx" \
+                        --collect:"XPlat Code Coverage" \
+                        --results-directory ./TestResults \
+                        -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+                '''
+            }
+            post {
+                always {
+                    sh '''
+                        cd apps/backend || exit 0
+                        find TestResults -name '*.trx' -exec trx2junit {} \\; || true
+                    '''
+
+                    junit testResults: '**/apps/backend/TestResults/**/*.xml', allowEmptyResults: true
+
+                    recordCoverage(
+                        tools: [[
+                            parser: 'COBERTURA',
+                            pattern: '**/apps/backend/TestResults/**/coverage.cobertura.xml'
+                        ]],
+                        sourceCodeRetention: 'EVERY_BUILD'
+                    )
+
+                    archiveArtifacts artifacts: '**/apps/backend/TestResults/**/*', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            when {
+                changeset "apps/backend/**"
+            }
+            steps {
+                sh '''
+                    cd apps/backend
+                    docker pull ${DOCKER_IMAGE}:latest || true
+                    docker build \
+                        --cache-from ${DOCKER_IMAGE}:latest \
+                        -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
+                    docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
+                '''
+            }
+        }
+
+        stage('Push Image') {
+            when {
+                changeset "apps/backend/**"
+            }
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'docker-hub',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                        docker push ${DOCKER_IMAGE}:latest
+                        docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                changeset "apps/backend/**"
+            }
+            steps {
+                sshagent(['server-ssh']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no alexei@alexei.dev.br '
+                            cd /home/alexei/docker/task-manager &&
+                            docker compose pull task-manager-api &&
+                            docker compose up -d --no-deps task-manager-api
+                        '
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh '''
+                docker rmi ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest || true
+            '''
+        }
+
+        success {
+            echo "✅ Pipeline finalizado com sucesso – imagem ${DOCKER_IMAGE}:${BUILD_NUMBER}"
+        }
+
+        failure {
+            echo "❌ Pipeline falhou – verifique os logs acima"
+        }
+    }
+}
